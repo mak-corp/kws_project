@@ -24,6 +24,9 @@ class WanDBWriter:
         self.mode = ""
         self.timer = datetime.now()
 
+    def finish(self):
+        self.wandb.finish()
+
     def set_step(self, step, mode):
         self.mode = mode
         self.step = step

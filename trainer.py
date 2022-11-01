@@ -1,4 +1,5 @@
-#!g1.1
+import json
+import numpy as np
 import os
 import pandas as pd
 import time
@@ -7,11 +8,11 @@ import torch.nn.functional as F
 from tqdm import tqdm, trange
 import matplotlib.pyplot as plt
 
-from melspec import LogMelspec
-from metrics import get_au_fa_fr
-from metric_tracker import MetricTracker
-from random_seed import set_random_seed
-from wandb import WanDBWriter
+from .melspec import LogMelspec
+from .metrics import get_au_fa_fr
+from .metric_tracker import MetricTracker
+from .random_seed import set_random_seed
+from .wandb import WanDBWriter
 
 from IPython.display import clear_output
 
@@ -34,9 +35,11 @@ class Trainer:
         self.model = model
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
+        self.len_epoch = len(self.train_dataloader)
 
         self.optimizer = optimizer
         self.lr = config.learning_rate
+        self.n_epochs = config.num_epochs
 
         self.train_log_melspec = LogMelspec(config.sample_rate, config.n_mels, config.device, is_train=True)
         self.val_log_melspec = LogMelspec(config.sample_rate, config.n_mels, config.device, is_train=False)
@@ -64,17 +67,16 @@ class Trainer:
 
     def _train_epoch(self, epoch):
         self.model.train()
-        len_epoch = len(self.train_dataloader)
 
         train_metrics = MetricTracker(*self.train_metric_names)
-        for batch_num, (x_batch, y_batch) in zip(trange(len_epoch), self.train_dataloader):
+        for batch_num, (x_batch, y_batch) in zip(trange(self.len_epoch), self.train_dataloader):
             self._process_batch(x_batch, y_batch, self.train_log_melspec, train_metrics, is_train=True)
 
         train_result = train_metrics.result()
 
         if self.writer is not None:
-            self.writer.add_raw_scalar("epoch", epoch, step=(epoch-1)*len_epoch)
-            self.writer.set_step(epoch * len_epoch, mode='train')
+            self.writer.add_raw_scalar("epoch", epoch, step=epoch*self.len_epoch)
+            self.writer.set_step(epoch * self.len_epoch, mode='train')
             self.writer.add_scalar(
                 "learning rate", self.lr
             )
@@ -106,8 +108,7 @@ class Trainer:
         val_result = self.validate()
             
         if self.writer is not None:
-            len_epoch = len(self.train_dataloader)
-            self.writer.set_step(epoch * len_epoch, mode='val')
+            self.writer.set_step(epoch * self.len_epoch, mode='val')
             self._log_metrics(val_result)
 
         return val_result
@@ -140,7 +141,7 @@ class Trainer:
         acc = torch.sum(argmax_probs == labels) / torch.numel(argmax_probs)
 
         metrics.update("loss", loss.item())
-        metrics.update("acc", acc)
+        metrics.update("acc", acc.item())
         
         return probs[:, 1].cpu()
 
@@ -148,19 +149,17 @@ class Trainer:
     def plot_metric(self, metric='loss'):
         plt.title('{}'.format(metric))
 
+        steps = np.arange(1, len(self.train_history)+1) * self.len_epoch
         if metric in self.train_history:
-            plt.plot(self.train_history[metric], label='train', zorder=1)
+            plt.plot(steps, self.train_history[metric], label='train', zorder=1)
         if metric in self.val_history:
-            plt.plot(self.val_history[metric], label='val', zorder=2)
+            plt.plot(steps, self.val_history[metric], label='val', zorder=2)
         
         plt.xlabel('train steps')
-        
         plt.legend(loc='best')
-        plt.grid()
 
     
     def plot_metrics(self):
-        plt.figure(figsize=(15, 4))
         for i, metric in enumerate(set(self.train_metric_names + self.val_metric_names)):
             plt.subplot(1, 3, i + 1)
             self.plot_metric(metric)
@@ -177,19 +176,22 @@ class Trainer:
             train_result = self._train_epoch(epoch)
             val_result = self._validate_epoch(epoch)
             self.train_history = self.train_history.append(train_result, ignore_index=True)
-            self.train_history = self.val_history.append(val_result, ignore_index=True)
+            self.val_history = self.val_history.append(val_result, ignore_index=True)
 
             if display:
                 clear_output()
                 print("------------------------------------")
                 print('Epoch {}/{}'.format(epoch, self.n_epochs))
-            print()
             epoch_result = train_result
             epoch_result.update({f"{key}_val": value for key, value in val_result.items()})
-            print(epoch_result)
+            print(json.dumps(epoch_result, indent=4))
             print("------------------------------------")
             print()
             if display:
                 self.plot_metrics()
         print("Finish training")
-        time.sleep(5)
+
+
+    def finish(self):
+        if self.writer is not None:
+            self.writer.finish()
