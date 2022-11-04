@@ -160,16 +160,17 @@ class Trainer:
 
     
     def plot_metrics(self):
-        for i, metric in enumerate(set(self.train_metric_names + self.val_metric_names)):
+        metrics = sorted(list(set(self.train_metric_names + self.val_metric_names)))
+        for i, metric in enumerate(metrics):
             plt.subplot(1, 3, i + 1)
             self.plot_metric(metric)
         plt.show()
 
 
-    def train(self, display=True):
+    def train(self, start_epoch=1, display=True):
         print(f"Start training")
         self.model = self.model.to(self.device)
-        for epoch in range(1, self.n_epochs+1):
+        for epoch in range(start_epoch, start_epoch + self.n_epochs):
             print("------------------------------------")
             print('Epoch {}/{}'.format(epoch, self.n_epochs))
 
@@ -181,7 +182,7 @@ class Trainer:
             if display:
                 clear_output()
                 print("------------------------------------")
-                print('Epoch {}/{}'.format(epoch, self.n_epochs))
+                print('Epoch {}/{}'.format(epoch, start_epoch + self.n_epochs - 1))
             epoch_result = train_result
             epoch_result.update({f"{key}_val": value for key, value in val_result.items()})
             print(json.dumps(epoch_result, indent=4))
