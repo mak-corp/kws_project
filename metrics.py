@@ -13,7 +13,7 @@ def count_FA_FR(preds, labels):
     return FA.item() / torch.numel(preds), FR.item() / torch.numel(preds)
 
 
-def get_au_fa_fr(probs, labels):
+def get_au_fa_fr(probs, labels, plot_fa_fr=False):
     sorted_probs, _ = torch.sort(probs)
     sorted_probs = torch.cat((torch.Tensor([0]), sorted_probs, torch.Tensor([1])))
     labels = torch.cat(labels, dim=0)
@@ -24,8 +24,13 @@ def get_au_fa_fr(probs, labels):
         FA, FR = count_FA_FR(preds, labels)        
         FAs.append(FA)
         FRs.append(FR)
-    # plt.plot(FAs, FRs)
-    # plt.show()
+
+    if plot_fa_fr:
+        plt.title("FA-FR")
+        plt.xlabel("FAs")
+        plt.ylabel("FRs")
+        plt.plot(FAs, FRs)
+        plt.show()
 
     # ~ area under curve using trapezoidal rule
     return -np.trapz(FRs, x=FAs)

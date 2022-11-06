@@ -93,7 +93,7 @@ class Trainer:
         return train_result
 
 
-    def validate(self):
+    def validate(self, plot_fa_fr=False):
         self.model.eval()
         all_labels = []
         all_probs = []
@@ -104,7 +104,7 @@ class Trainer:
                 all_labels.append(y_batch)
                 all_probs.append(probs)
 
-        au_fa_fr = get_au_fa_fr(torch.cat(all_probs, dim=0).cpu(), all_labels)
+        au_fa_fr = get_au_fa_fr(torch.cat(all_probs, dim=0).cpu(), all_labels, plot_fa_fr)
         val_metrics.update("AU-FA-FR", au_fa_fr)
 
         val_result = val_metrics.result()

@@ -25,7 +25,7 @@ def audio_stream(queue: mp.Queue):
 
 
 if __name__ == "__main__":
-    model = torch.load("kws.pth").eval()
+    model = torch.load("kws_compressed.pth").eval()
 
     ctx = mp.get_context("spawn")
     chunk_queue = ctx.Queue()
