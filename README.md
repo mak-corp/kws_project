@@ -1,5 +1,12 @@
 # Homework 2 (KWS)
 
+### Repository structure
+
+* Notebook with experiments in `notebook.ipynb` (contains all nesessary dependencies to represent results)
+* Streaming model in `kws_compressed.pth`
+* Script to test streaming in 'stream.py
+* Wandb report here: https://wandb.ai/mak_corp/kws_project/reports/KWS-project--VmlldzoyOTIxOTIw
+
 ### Task
 Implement streaming KWS, speed up and compress the model 10 times.
 The goal of the homework is not to implement a fancy architecture and write clean and well-structured code. On the contrary, you will be able to write down all the code in notebooks, but with a lot of comments and graphs :). The goal of the work is to explore various ways to accelerate NNs.
