@@ -64,12 +64,14 @@ class Trainer:
         self.optimizer.load_state_dict(torch.load(f'checkpoints/{checkpoint_name}/optimizer.pt', map_location=torch.device('cpu')))
         print(f"Loaded checkpoint from checkpoints/{checkpoint_name}")
 
+
     def filtered_load(self, checkpoint_name):
         model_state = torch.load(f'checkpoints/{checkpoint_name}/model.pt', map_location=torch.device('cpu'))
         model_state = {k: v for k, v in model_state.items() if "total" not in k}
         self.model.load_state_dict(model_state)
         self.optimizer.load_state_dict(torch.load(f'checkpoints/{checkpoint_name}/optimizer.pt', map_location=torch.device('cpu')))
         print(f"Loaded checkpoint from checkpoints/{checkpoint_name}")
+
 
     def _train_epoch(self, epoch):
         self.model.train()
