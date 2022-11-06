@@ -27,6 +27,21 @@ def get_au_fa_fr(probs, labels, plot_fa_fr=False):
         FRs.append(FR)
 
     if plot_fa_fr:
+        plt.subplot(1, 3, 1)
+        plt.title("FAs")
+        plt.xlabel("p")
+        plt.ylabel("FAs")
+        plt.plot(sorted_probs, FAs)
+        plt.show()
+
+        plt.subplot(1, 3, 2)
+        plt.title("FRs")
+        plt.xlabel("p")
+        plt.ylabel("FRs")
+        plt.plot(sorted_probs, FRs)
+        plt.show()
+
+        plt.subplot(1, 3, 3)
         plt.title("FA-FR")
         plt.xlabel("FAs")
         plt.ylabel("FRs")
